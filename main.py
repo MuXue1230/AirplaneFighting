@@ -12,6 +12,7 @@ import plugin
 import listener
 import plane
 import bullet
+import level
 
 from pygame.locals import *
 from random import *
