@@ -1,4 +1,5 @@
 # main.py
+import os
 import pygame
 import time
 import importlib
@@ -12,7 +13,7 @@ import plugin
 import listener
 import plane
 import bullet
-import level
+import levels
 
 from pygame.locals import *
 from random import *
@@ -74,8 +75,11 @@ eventBus.addListener(plugin.event.EventType.DOUBLE_BULLET_EVENT,listener.DoubleB
 eventBus.addListener(plugin.event.EventType.NO_HIT_EVENT,listener.NoHitListener())
 eventBus.addListener(plugin.event.EventType.BOMB_EVENT,listener.BombListener())
 
+running_level = None
+
 # 主程序
 def main(s=True,p=True,set=False):
+    global running_level
     pygame.mixer.stop()
     screen.blit(load_img,(0,0))
     screen.blit(load_text,load_rect)
@@ -88,7 +92,7 @@ def main(s=True,p=True,set=False):
         button_over_sound.set_volume(0.3)
         button_click_sound = empty.load_sound(conf.assets_path + "sound/button_click.wav", eventBus, {**locals(), **globals()})
         button_click_sound.set_volume(0.2)
-    if not s and not set:
+    if (not s and not set) or running_level:
         if conf.settings['mix']:
             bullet_sound = empty.load_sound(conf.assets_path + "sound/bullet.wav", eventBus, {**locals(), **globals()})
             bullet_sound.set_volume(0.1)
@@ -126,15 +130,15 @@ def main(s=True,p=True,set=False):
 
         # 生成敌方小型飞机
         small_enemies = pygame.sprite.Group()
-        tool.add_small_enemies(small_enemies, enemies, 15, eventBus, {**locals(),**globals()})
+        if not running_level: tool.add_small_enemies(small_enemies, enemies, 15, eventBus, {**locals(),**globals()})
 
         # 生成敌方中型飞机
         mid_enemies = pygame.sprite.Group()
-        tool.add_mid_enemies(mid_enemies, enemies, 4, eventBus, {**locals(),**globals()})
+        if not running_level: tool.add_mid_enemies(mid_enemies, enemies, 4, eventBus, {**locals(),**globals()})
 
         # 生成敌方大型飞机
         big_enemies = pygame.sprite.Group()
-        tool.add_big_enemies(big_enemies, enemies, 2, eventBus, {**locals(),**globals()})
+        if not running_level: tool.add_big_enemies(big_enemies, enemies, 2, eventBus, {**locals(),**globals()})
 
         # 生成普通子弹
         bullet1 = []
@@ -168,7 +172,7 @@ def main(s=True,p=True,set=False):
         bullet_supply = supply.BulletSupply(bg_size, conf.assets_path, eventBus, {**locals(),**globals()})
         bomb_supply = supply.BombSupply(bg_size, conf.assets_path, eventBus, {**locals(),**globals()})
         supplyEvent = plugin.EventTimer(plugin.event.SupplyEvent(screen, {**locals(),**globals()}), eventBus, (30, plugin.TimerUnit.SEC), -1)
-        supplyEvent.start()
+        if not running_level: supplyEvent.start()
     
         # 标志是否使用超级子弹
         is_double_bullet = [False]
@@ -247,6 +251,11 @@ def main(s=True,p=True,set=False):
         if conf.settings['mix']:button_click_sound.play()
         eventBus.addEvent(plugin.event.ExitEvent(screen,{**locals(),**globals(),**_in}))
     
+    def _open_level(_in):
+        if conf.settings['mix']:button_click_sound.play()
+        start_UI.close()
+        level_UI.open()
+    
     def configPageOpen(**_in):
         settings_UI.close()
         about_UI.open()
@@ -254,6 +263,12 @@ def main(s=True,p=True,set=False):
     def configPageClose(_in):
         about_UI.close()
         settings_UI.open()
+    
+    def _open_level_0(level_id):
+        global running_level
+        running_level = levels.Level(level_id)
+        running_level.start()
+        main(False)
 
     # 设置开始UI
     start_UI = gui.GUI(screen,*bg_size,is_open=s)
@@ -278,14 +293,16 @@ def main(s=True,p=True,set=False):
     else:
         s_label_1 = gui.components.Label(screen,'game.label.source.best.text',conf.language,48,('center',0,300),screen,color=config.COLOR['WHITE'])
         s_label_2 = gui.components.Label(screen,'0',conf.language,60,('center_obj',0,-70),father_obj=s_label_1,color=config.COLOR['WHITE'])
-        s_button_1 = gui.components.UIButton(screen,'game.button.start.text',conf.language,eventBus,{**locals(),**globals()},_start,_over,('center_obj',0,-230),father_obj=s_label_2,recorded=recorded,asset_path=conf.assets_path,conf_name=conf.config_name)
-        s_button_2 = gui.components.UIButton(screen,'game.button.settings.text',conf.language,eventBus,{**locals(),**globals()},_settings,_over,('center_obj',0,-50),father_obj=s_button_1,asset_path=conf.assets_path,conf_name=conf.config_name)
-        s_button_3 = gui.components.UIButton(screen,'game.button.exit.text',conf.language,eventBus,{**locals(),**globals()},_exit,_over,('center_obj',0,-50),father_obj=s_button_2,asset_path=conf.assets_path,conf_name=conf.config_name)
+        s_button_1 = gui.components.UIButton(screen,'game.button.start.text',conf.language,eventBus,{**locals(),**globals()},_start,_over,('center_obj',0,-170),father_obj=s_label_2,recorded=recorded,asset_path=conf.assets_path,conf_name=conf.config_name)
+        s_button_2 = gui.components.UIButton(screen,'game.button.level.text',conf.language,eventBus,{**locals(),**globals()},_open_level,_over,('center_obj',0,-50),father_obj=s_button_1,recorded=recorded,asset_path=conf.assets_path,conf_name=conf.config_name)
+        s_button_3 = gui.components.UIButton(screen,'game.button.settings.text',conf.language,eventBus,{**locals(),**globals()},_settings,_over,('center_obj',0,-50),father_obj=s_button_2,asset_path=conf.assets_path,conf_name=conf.config_name)
+        s_button_4 = gui.components.UIButton(screen,'game.button.exit.text',conf.language,eventBus,{**locals(),**globals()},_exit,_over,('center_obj',0,-50),father_obj=s_button_3,asset_path=conf.assets_path,conf_name=conf.config_name)
         start_UI.add_label(s_label_1)
         start_UI.add_label(s_label_2)
         start_UI.add_button(s_button_1)
         start_UI.add_button(s_button_2)
         start_UI.add_button(s_button_3)
+        start_UI.add_button(s_button_4)
 
     # 设置暂停UI
     pause_UI = gui.GUI(screen,*bg_size)
@@ -297,6 +314,11 @@ def main(s=True,p=True,set=False):
     pause_UI.add_label(p_label_2)
     pause_UI.add_button(p_button_1)
     pause_UI.add_button(p_button_2)
+
+    # 设置关卡UI
+    level_UI = gui.PageUI(screen,*bg_size,'game.label.level_game.text',conf.language,start_UI,conf.assets_path,conf.config_name,eventBus,{**locals(),**globals()})
+    for item in os.listdir(conf.assets_path+'level/'):
+        level_UI.add_thing(gui.components.PageThing(screen,item[:2],conf.language,eventBus,{**locals(),**globals()},1,'enter',1,1,conf.assets_path,conf.config_name,jump_to=_open_level_0,level_id=item[:2]))
 
     # 设置设置UI
     settings_UI = gui.PageUI(screen,*bg_size,'game.label.settings.text',conf.language,start_UI,conf.assets_path,conf.config_name,eventBus,{**locals(),**globals()})
@@ -371,12 +393,12 @@ def main(s=True,p=True,set=False):
         timer = pygame.time.Clock()
 
     running = True
-    is_running = [not(s or set or paused[0])]
+    is_running = [not(s or set or paused[0]) and not running_level]
 
     eventBus.addEvent(plugin.event.InitEvent(screen,{**locals(),**globals()}))
 
     while running:
-        is_running = [not(s or set or paused[0])]
+        is_running = [not(start_UI.is_open or settings_UI.is_open or paused[0] or level_UI.is_open or about_UI.is_open) and not running_level]
         delay_time = time.time() - temp_time
         if delay_time > 0.01: delay_time = 0.01
         temp_time = time.time()
@@ -385,7 +407,7 @@ def main(s=True,p=True,set=False):
         for event in pygame.event.get():
             if event.type == QUIT:
                 eventBus.addEvent(plugin.event.ExitEvent(screen,globals()))
-            if is_running[0]:
+            if is_running[0] or running_level:
                 if event.type == KEYDOWN:
                     if event.key == K_SPACE:
                         eventBus.addEvent(bombEvent)
@@ -734,6 +756,190 @@ def main(s=True,p=True,set=False):
             else:
                 level_text = level_font.render("Lv."+str(level), True, config.COLOR['WHITE'])
             screen.blit(level_text, (10, 5))
+        
+        elif running_level:
+            # 绘制暂停按钮
+            screen.blit(paused_image, paused_rect)
+
+            running_level.handle({**locals(),**globals()})
+
+            # 检测用户的键盘操作
+            key_pressed = pygame.key.get_pressed()
+
+            if key_pressed[K_w] or key_pressed[K_UP]:
+                me.moveUp(delay_time)
+            if key_pressed[K_s] or key_pressed[K_DOWN]:
+                me.moveDown(delay_time)
+            if key_pressed[K_a] or key_pressed[K_LEFT]:
+                me.moveLeft(delay_time)
+            if key_pressed[K_d] or key_pressed[K_RIGHT]:
+                me.moveRight(delay_time)
+
+            # 发射子弹
+            if not(delay % 10):
+                if conf.settings['mix']:bullet_sound.play()
+                if is_double_bullet[0]:
+                    bullets = bullet2
+                    bullets[bullet2_index].reset((me.rect.centerx-33, me.rect.centery))
+                    bullets[bullet2_index+1].reset((me.rect.centerx+30, me.rect.centery))
+                    bullet2_index = (bullet2_index + 2) % BULLET2_NUM
+                else:
+                    bullets = bullet1
+                    bullets[bullet1_index].reset(me.rect.midtop)
+                    bullet1_index = (bullet1_index + 1) % BULLET1_NUM
+
+                
+            # 检测子弹是否击中敌机
+            try:
+                for b in bullets:
+                    if b.active:
+                        b.move(delay_time)
+                        screen.blit(b.image, b.rect)
+                        enemy_hit = pygame.sprite.spritecollide(b, enemies, False, pygame.sprite.collide_mask)
+                        if enemy_hit:
+                            b.active = False
+                            for e in enemy_hit:
+                                if e in mid_enemies or e in big_enemies:
+                                    e.hit = True
+                                    e.energy -= 1
+                                    if e.energy == 0:
+                                        e.active = False
+                                else:
+                                    e.active = False
+            except:
+                pass
+            
+            # 绘制大型敌机
+            for each in big_enemies:
+                if each.active:
+                    each.move(delay_time)
+                    if each.hit:
+                        screen.blit(each.image_hit, each.rect)
+                        each.hit = False
+                    else:
+                        if switch_image:
+                            screen.blit(each.image1, each.rect)
+                        else:
+                            screen.blit(each.image2, each.rect)
+
+                    # 绘制血槽
+                    pygame.draw.line(screen, config.COLOR['BLACK'], \
+                                     (each.rect.left, each.rect.top - 5), \
+                                     (each.rect.right, each.rect.top - 5), \
+                                     2)
+                    # 当生命大于20%显示绿色，否则显示红色
+                    energy_remain = each.energy / plane.BigEnemyPlane.energy
+                    if energy_remain > 0.2:
+                        energy_color = config.COLOR['GREEN']
+                    else:
+                        energy_color = config.COLOR['RED']
+                    pygame.draw.line(screen, energy_color, \
+                                     (each.rect.left, each.rect.top - 5), \
+                                     (each.rect.left + each.rect.width * energy_remain, \
+                                      each.rect.top - 5), 2)
+                        
+                    # 即将出现在画面中，播放音效
+                    if each.rect.bottom == -50:
+                        if conf.settings['mix']:
+                            each.fly_sound.play(-1)
+                else:
+                    # 毁灭
+                    if not(delay % 12):
+                        if each.destroy_index == 0:
+                            if conf.settings['mix']:
+                                each.down_sound.play()
+                        screen.blit(each.destroy_images[each.destroy_index], each.rect)
+                        each.destroy_index = (each.destroy_index + 1) % 6
+                        if each.destroy_index == 0:
+                            if conf.settings['mix']:
+                                each.fly_sound.stop()
+                            enemies.remove(each)
+                            big_enemies.remove(each)
+
+            # 绘制中型敌机：
+            for each in mid_enemies:
+                if each.active:
+                    each.move(delay_time)
+
+                    if each.hit:
+                        screen.blit(each.image_hit, each.rect)
+                        each.hit = False
+                    else:
+                        screen.blit(each.image, each.rect)
+
+                    # 绘制血槽
+                    pygame.draw.line(screen, config.COLOR['BLACK'], \
+                                     (each.rect.left, each.rect.top - 5), \
+                                     (each.rect.right, each.rect.top - 5), \
+                                     2)
+                    # 当生命大于20%显示绿色，否则显示红色
+                    energy_remain = each.energy / plane.MiddleEnemyPlane.energy
+                    if energy_remain > 0.2:
+                        energy_color = config.COLOR['GREEN']
+                    else:
+                        energy_color = config.COLOR['RED']
+                    pygame.draw.line(screen, energy_color, \
+                                     (each.rect.left, each.rect.top - 5), \
+                                     (each.rect.left + each.rect.width * energy_remain, \
+                                      each.rect.top - 5), 2)
+                else:
+                    # 毁灭
+                    if not(delay % 12):
+                        if each.destroy_index == 0:
+                            if conf.settings['mix']:
+                                each.down_sound.play()
+                        screen.blit(each.destroy_images[each.destroy_index], each.rect)
+                        each.destroy_index = (each.destroy_index + 1) % 4
+                        if each.destroy_index == 0:
+                            enemies.remove(each)
+                            mid_enemies.remove(each)
+
+            # 绘制小型敌机：
+            for each in small_enemies:
+                if each.active:
+                    each.move(delay_time)
+                    screen.blit(each.image, each.rect)
+                else:
+                    # 毁灭
+                    if not(delay % 20):
+                        if each.destroy_index == 0:
+                            if conf.settings['mix']:
+                                each.down_sound.play()
+                        screen.blit(each.destroy_images[each.destroy_index], each.rect)
+                        each.destroy_index = (each.destroy_index + 1) % 4
+                        if each.destroy_index == 0:
+                            enemies.remove(each)
+                            small_enemies.remove(each)
+
+            # 检测我方飞机是否被撞
+            enemies_down = pygame.sprite.spritecollide(me, enemies, False, pygame.sprite.collide_mask)
+            if enemies_down and not me.invincible:
+                me.active = False
+                for e in enemies_down:
+                    e.active = False
+            
+            # 绘制我方飞机
+            if me.active:
+                if switch_image:
+                    screen.blit(me.image1, me.rect)
+                else:
+                    screen.blit(me.image2, me.rect)
+            else:
+                # 毁灭
+                if not(delay % 12):
+                    if me_destroy_index == 0:
+                        if conf.settings['mix']:me_down_sound.play()
+                    screen.blit(me.destroy_images[me_destroy_index], me.rect)
+                    me_destroy_index = (me_destroy_index + 1) % 4
+                    if me_destroy_index == 0:
+                        level_UI.open()
+                        running_level.stop()
+                        running_level = None
+
+            if not enemies.sprites():
+                level_UI.open()
+                running_level.stop()
+                running_level = None
 
         elif start_UI.is_open:
             if not recorded[0]:
@@ -927,6 +1133,9 @@ def main(s=True,p=True,set=False):
         elif about_UI.is_open:
             about_UI.draw()
             about_UI.check()
+        elif level_UI.is_open:
+            level_UI.draw()
+            level_UI.check()
             
         # 切换图片
         if not(delay % 10):
@@ -941,7 +1150,7 @@ def main(s=True,p=True,set=False):
             timer.tick(conf.settings['fps'])
             delay -= (200-conf.settings['fps'])//5
 
-        eventBus.addEvent(plugin.event.Event())
+        eventBus.addEvent(plugin.event.Event({**locals(),**globals()}))
         pygame.display.flip()
         
 if __name__ == "__main__":
