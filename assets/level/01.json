@@ -1,0 +1,31 @@
+{
+    "num": 2,
+    "add_small_enemies": [
+        {
+            "type": "enemy",
+            "x": 20,
+            "time": 0,
+            "active": true
+        },
+        {
+            "type": "enemy",
+            "x": 40,
+            "time": 0,
+            "active": true
+        },
+        {
+            "type": "enemy",
+            "x": 60,
+            "time": 0,
+            "active": true
+        },
+        {
+            "type": "enemy",
+            "x": 80,
+            "time": 0,
+            "active": true
+        }
+    ],
+    "add_mid_enemies": [],
+    "add_big_enemies": []
+}

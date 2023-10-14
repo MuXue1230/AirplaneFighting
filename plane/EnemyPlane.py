@@ -16,11 +16,14 @@ class EnemyPlane(Plane):
         self.destroy_index = 0
         self.reset()
     
-    def move(self,delay_time):
+    def set_top(self,top):
+        self.rect.top = top
+    
+    def move(self,delay_time,reset=True):
         if self.rect.top < self.height:
             self.pos_temp += self.speed*delay_time
             self.rect.top = int(self.pos_temp)
-        else:
+        elif reset:
             self.reset()
 
     def reset(self):
