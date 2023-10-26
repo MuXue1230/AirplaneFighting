@@ -1,8 +1,5 @@
 # main.py
-import os
-import pygame
-import time
-import importlib
+import os, pygame, time, importlib
 
 import gui
 import supply
