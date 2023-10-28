@@ -1,4 +1,11 @@
-# main.py
+#=====================#
+#                     #
+#       main.py       #
+#    Release 1.1.1    #
+#                     #
+#=====================#
+
+# 导入库
 import os
 import pygame
 import time
@@ -75,24 +82,36 @@ eventBus.addListener(plugin.event.EventType.DOUBLE_BULLET_EVENT,listener.DoubleB
 eventBus.addListener(plugin.event.EventType.NO_HIT_EVENT,listener.NoHitListener())
 eventBus.addListener(plugin.event.EventType.BOMB_EVENT,listener.BombListener())
 
+# 设置剧情关卡
 running_level = None
 
 # 主程序
 def main(s=True,p=True,set=False):
     global running_level
+
+    # 绘制加载界面
     pygame.mixer.stop()
     screen.blit(load_img,(0,0))
     screen.blit(load_text,load_rect)
     pygame.display.flip()
+
+    # 重载配置
     if set:
         conf.reload()
+    
+    # 重置玩家坠毁图片索引
     me_destroy_index = 0
+
+    # 加载音效
     if conf.settings['mix']:
         button_over_sound = empty.load_sound(conf.assets_path + "sound/button.wav", eventBus, {**locals(), **globals()})
         button_over_sound.set_volume(0.3)
         button_click_sound = empty.load_sound(conf.assets_path + "sound/button_click.wav", eventBus, {**locals(), **globals()})
         button_click_sound.set_volume(0.2)
+    
+    # 初始化游戏
     if (not s and not set) or running_level:
+        # 加载音效
         if conf.settings['mix']:
             bullet_sound = empty.load_sound(conf.assets_path + "sound/bullet.wav", eventBus, {**locals(), **globals()})
             bullet_sound.set_volume(0.1)
@@ -126,6 +145,7 @@ def main(s=True,p=True,set=False):
         # 生成我方飞机
         me = plane.PlayerPlane(bg_size,conf.assets_path, conf.settings['sensitivity'],eventBus,{**locals(),**globals()})
 
+        # 初始化敌机列表
         enemies = pygame.sprite.Group()
 
         # 生成敌方小型飞机
@@ -178,7 +198,8 @@ def main(s=True,p=True,set=False):
         is_double_bullet = [False]
         doubleBulletEvent = plugin.EventTimer(plugin.event.DoubleBulletEvent(screen, {**locals(),**globals()}), eventBus, (18, plugin.TimerUnit.SEC), 1)
         noHitEvent = plugin.EventTimer(plugin.event.NoHitEvent(screen, {**locals(),**globals()}), eventBus, (3, plugin.TimerUnit.SEC), 1)
-        
+    
+    # 加载和播放音乐
     if p and conf.settings['music']:
         empty.load_music(conf.assets_path + "sound/gui_music.ogg", eventBus, {**locals(), **globals()})
         pygame.mixer.music.set_volume(0.2)
