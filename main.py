@@ -70,40 +70,65 @@ if conf.settings['music']:
     pygame.mixer.music.set_volume(0.2)
 
 # 初始化参数
+logger.log('Init basic var and tools')
 bg_size = width, height = conf.get_screen_size()
 tool = tools.Tools(bg_size,conf)
 
 # 初始化加载字体
+logger.log('Set up load font')
+logger.debug('Init font')
 load_font = pygame.font.Font(conf.font,72)
+logger.debug('Render font (',load_font,')')
 load_text = load_font.render(conf.language.get('game.label.loading.text',conf._lang),load_font,config.COLOR['WHITE'])
+logger.debug('Get rendered font\'s rect (',load_text,')')
 load_rect = load_text.get_rect()
 
 # 设置加载屏幕
+logger.log('Set up screen(s)')
+logger.debug('Create screen')
 screen = pygame.display.set_mode(bg_size, DOUBLEBUF|HWSURFACE|NOFRAME)
+logger.debug('Config screen')
 pygame.display.set_caption(conf.language.get('game.title.text',conf._lang))
+logger.debug('Place rendered font (',load_text,')')
 load_rect.center = screen.get_rect().center
+logger.debug('Render menu&game background')
 background = empty.load_image(conf.assets_path + "images/background.png", eventBus, locals()).convert()
+logger.debug('Render load background')
 load_img = empty.load_image(conf.assets_path + "images/load.png", eventBus, locals()).convert()
+logger.debug('Transform backgrounds')
 background = pygame.transform.scale(background, bg_size)
 load_img = pygame.transform.scale(load_img, bg_size)
 
 # 绘制加载屏幕
+logger.log('Draw load screen')
+logger.debug('Draw load background (',load_img,')')
 screen.blit(load_img,(0,0))
+logger.debug('Draw load text (',load_text,')')
 screen.blit(load_text,load_rect)
+logger.debug('Update screen')
 pygame.display.flip()
 
 # 发布预初始化事件
+logger.log('Launch PreInitEvent')
 eventBus.addEvent(plugin.event.PreInitEvent(screen,locals()))
 
 # 设置事件监听器
+logger.log('Set up listeners')
+logger.debug('Set up ExitListener')
 eventBus.addListener(plugin.event.EventType.EXIT_EVENT,listener.ExitListener())
+logger.debug('Set up ReloadListener')
 eventBus.addListener(plugin.event.EventType.RELOAD_EVENT,listener.ReloadListener())
+logger.debug('Set up SupplyListener')
 eventBus.addListener(plugin.event.EventType.SUPPLY_EVENT,listener.SupplyListener())
+logger.debug('Set up DoubleBulletListener')
 eventBus.addListener(plugin.event.EventType.DOUBLE_BULLET_EVENT,listener.DoubleBulletListener())
+logger.debug('Set up NoHitListener')
 eventBus.addListener(plugin.event.EventType.NO_HIT_EVENT,listener.NoHitListener())
+logger.debug('Set up BombListener')
 eventBus.addListener(plugin.event.EventType.BOMB_EVENT,listener.BombListener())
 
 # 设置剧情关卡
+logger.log('Set up levels')
 running_level = None
 
 # 主程序
