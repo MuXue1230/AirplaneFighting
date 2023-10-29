@@ -21,29 +21,50 @@ import listener
 import plane
 import bullet
 import levels
+import debug
 
 from pygame.locals import *
 from random import *
 
+# 初始化输出
+logger = debug.Logger()
+
 # 加载配置
+logger.log('Load configure')
 conf = config.Config()
+logger.debug('Configure class by',conf)
+logger.debug('Init configure class')
 conf.init()
 
 # 设置事件系统
+logger.log('Set up EventBus')
 eventBus = plugin.EventBus()
+logger.debug('EventBus class by',eventBus)
+
+# 导入插件
+logger.log('Import plugins')
+logger.debug('Import plugins\' package')
 plugins = importlib.import_module('plugins')
-print('EventBus:',eventBus)
+logger.debug('Setting up each plugin')
 for item in dir(plugins):
     if item[:2] == '__':
         continue
-    getattr(plugins,item).init(eventBus)
+    try:
+        getattr(plugins,item).init(eventBus)
+    except:
+        logger.error('Can\'t set up plugin:',item)
+        exit(1)
 
 # 初始化pygame
+logger.log('Init pygame')
+logger.debug('Init pygame video')
 pygame.init()
+logger.debug('Init pygame mixer (pre init by 48000,32,8,1024*1024*512)')
 pygame.mixer.pre_init(48000,32,8,1024*1024*512)
 pygame.mixer.init()
 
 # 加载音乐
+logger.log('Start game music')
 if conf.settings['music']:
     empty.load_music(conf.assets_path + "sound/gui_music.ogg", eventBus, locals())
     pygame.mixer.music.set_volume(0.2)

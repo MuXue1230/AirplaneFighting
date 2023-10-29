@@ -5,32 +5,35 @@ import plugin
 def load_sound(file_path,eventBus: plugin.EventBus,argv):
     eventBus.addEvent(plugin.event.LoadEvent(None,plugin.event.AssetType.SOUND,file_path,argv))
     try:
+        argv['logger'].debug('Loading file:',file_path)
         sound = pygame.mixer.Sound(file_path)
         return sound
     except:
-        print("[ERROR]音乐文件不全，无法导入！\n资源"+file_path+"路径无效")
+        argv['logger'].error('Load failure:',file_path)
         return EmptySound()
 
 def load_music(file_path,eventBus: plugin.EventBus,argv):
     eventBus.addEvent(plugin.event.LoadEvent(None,plugin.event.AssetType.MUSIC,file_path,argv))
     try:
+        argv['logger'].debug('Loading file:',file_path)
         pygame.mixer.music.load(file_path)
     except:
-        print("[ERROR]音乐文件不全，无法导入！\n资源"+file_path+"路径无效")
+        argv['logger'].error('Load failure:',file_path)
         pygame.mixer.music = EmptyMusic()
 
 def load_image(file_path,eventBus: plugin.EventBus,argv):
     eventBus.addEvent(plugin.event.LoadEvent(None,plugin.event.AssetType.IMAGE,file_path,argv))
     try:
+        argv['logger'].debug('Loading file:',file_path)
         import pygame
         image = pygame.image.load(file_path)
     except:
-        print("[ERROR]图片文件不全，无法导入！\n资源"+file_path+"路径无效")
-        image = create_green_rectangle()
+        argv['logger'].error('Load failure:',file_path)
+        image = create_gray_rectangle()
 
     return image
 
-def create_green_rectangle():
+def create_gray_rectangle():
     size = (50, 50)
     image = pygame.Surface(size)
     color = randint(0,255)
