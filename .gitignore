@@ -3,6 +3,7 @@
 .VSCodeCounter/
 *.exe
 try**.py
+log/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -136,19 +136,27 @@ def main(s=True,p=True,set=False):
     global running_level
 
     # 绘制加载界面
+    logger.log('Draw load screen')
+    logger.debug('Stop sounds')
     pygame.mixer.stop()
+    logger.debug('Draw load background (',load_img,')')
     screen.blit(load_img,(0,0))
+    logger.debug('Draw load text (',load_text,')')
     screen.blit(load_text,load_rect)
+    logger.debug('Update screen')
     pygame.display.flip()
 
     # 重载配置
+    logger.log('Reload configure')
     if set:
         conf.reload()
     
     # 重置玩家坠毁图片索引
+    logger.log('Reset player destroy index')
     me_destroy_index = 0
 
     # 加载音效
+    logger.log('Load GUI sounds')
     if conf.settings['mix']:
         button_over_sound = empty.load_sound(conf.assets_path + "sound/button.wav", eventBus, {**locals(), **globals()})
         button_over_sound.set_volume(0.3)
@@ -158,6 +166,7 @@ def main(s=True,p=True,set=False):
     # 初始化游戏
     if (not s and not set) or running_level:
         # 加载音效
+        logger.log('Load game sounds')
         if conf.settings['mix']:
             bullet_sound = empty.load_sound(conf.assets_path + "sound/bullet.wav", eventBus, {**locals(), **globals()})
             bullet_sound.set_volume(0.1)
@@ -177,6 +186,7 @@ def main(s=True,p=True,set=False):
             me_down_sound.set_volume(0.2)
 
         # 加载图片
+        logger.log('Load game images')
         pause_nor_image = empty.load_image(conf.assets_path + "images/pause_nor.png", eventBus, {**locals(), **globals()}).convert_alpha()
         pause_pressed_image = empty.load_image(conf.assets_path + "images/pause_pressed.png", eventBus, {**locals(), **globals()}).convert_alpha()
         resume_nor_image = empty.load_image(conf.assets_path + "images/resume_nor.png", eventBus, {**locals(), **globals()}).convert_alpha()
@@ -189,24 +199,37 @@ def main(s=True,p=True,set=False):
         bomb_image = empty.load_image(conf.assets_path + "images/bomb.png", eventBus, {**locals(), **globals()}).convert_alpha()
 
         # 生成我方飞机
+        logger.log('Spawn player')
         me = plane.PlayerPlane(bg_size,conf.assets_path, conf.settings['sensitivity'],eventBus,{**locals(),**globals()})
 
         # 初始化敌机列表
+        logger.log('Init enemy list')
         enemies = pygame.sprite.Group()
 
         # 生成敌方小型飞机
+        logger.log('Spawn small enemies')
+        logger.debug('Init small enemies list')
         small_enemies = pygame.sprite.Group()
+        logger.debug('Add small enemies to the list')
         if not running_level: tool.add_small_enemies(small_enemies, enemies, 15, eventBus, {**locals(),**globals()})
 
         # 生成敌方中型飞机
+        logger.log('Spawn middle enemies')
+        logger.debug('Init middle enemies list')
         mid_enemies = pygame.sprite.Group()
+        logger.debug('Add middle enemies to the list')
         if not running_level: tool.add_mid_enemies(mid_enemies, enemies, 4, eventBus, {**locals(),**globals()})
 
         # 生成敌方大型飞机
+        logger.log('Spawn big enemies')
+        logger.debug('Init big enemies list')
         big_enemies = pygame.sprite.Group()
+        logger.debug('Add big enemies to the list')
         if not running_level: tool.add_big_enemies(big_enemies, enemies, 2, eventBus, {**locals(),**globals()})
 
         # 生成普通子弹
+        logger.log('Setup bullets')
+        logger.debug('Setup normal bullet')
         bullet1 = []
         bullet1_index = 0
         BULLET1_NUM = 16
@@ -214,6 +237,7 @@ def main(s=True,p=True,set=False):
             bullet1.append(bullet.SingleBullet(me.rect.midtop,conf.assets_path,eventBus,{**locals(),**globals()}))
 
         # 生成超级子弹
+        logger.debug('Setup super bullet1')
         bullet2 = []
         bullet2_index = 0
         BULLET2_NUM = 32
@@ -384,8 +408,11 @@ def main(s=True,p=True,set=False):
 
     # 设置关卡UI
     level_UI = gui.PageUI(screen,*bg_size,'game.label.level_game.text',conf.language,start_UI,conf.assets_path,conf.config_name,eventBus,{**locals(),**globals()})
-    for item in os.listdir(conf.assets_path+'level/'):
-        level_UI.add_thing(gui.components.PageThing(screen,item[:2],conf.language,eventBus,{**locals(),**globals()},1,'enter',1,1,conf.assets_path,conf.config_name,jump_to=_open_level_0,level_id=item[:2]))
+    try:
+        for item in os.listdir(conf.assets_path+'level/'):
+            level_UI.add_thing(gui.components.PageThing(screen,item[:2],conf.language,eventBus,{**locals(),**globals()},1,'enter',1,1,conf.assets_path,conf.config_name,jump_to=_open_level_0,level_id=item[:2]))
+    except:
+        logger.error('Can\'t load any level')
 
     # 设置设置UI
     settings_UI = gui.PageUI(screen,*bg_size,'game.label.settings.text',conf.language,start_UI,conf.assets_path,conf.config_name,eventBus,{**locals(),**globals()})
